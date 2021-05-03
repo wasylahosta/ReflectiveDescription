@@ -32,6 +32,11 @@ final class ReflectiveDescriptionTests: XCTestCase {
         assert(descriptionOf: optionalInt as Any, isEqualTo: "(Int??) 4")
     }
     
+    func testWithDoubleOptionalNilInt() {
+        let optionalInt: Int??? = nil
+        assert(descriptionOf: optionalInt as Any, isEqualTo: "(Int???) nil")
+    }
+    
     func testWithEmptyStruct() {
         let aStruct = EmptyStruct()
         assert(descriptionOf: aStruct, isEqualTo: """
@@ -113,7 +118,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
         )
     }
     
-    func testOptionalArrayOfAny() {
+    func testWithOptionalArrayOfAny() {
         let array: [Any]? = [1, "Str", 1.2]
         assert(descriptionOf: array as Any, isEqualTo: """
                                                        Array<Any>? {
@@ -125,12 +130,58 @@ final class ReflectiveDescriptionTests: XCTestCase {
         )
     }
     
+    func testWithArrayOfOptionalInt() {
+        let array: [Int?] = [1, nil, 3]
+        assert(descriptionOf: array, isEqualTo: """
+                                                Array<Optional<Int>> {
+                                                  (Int?) 1
+                                                  (Int?) nil
+                                                  (Int?) 3
+                                                }
+                                                """
+        )
+    }
+    
+    func testWithDictionary() {
+        let dict: [String: Any] = ["intValue": 1, "stringValue": "Str"]
+        assert(descriptionOf: dict, isEqualTo: """
+                                               Dictionary<String, Any> {
+                                                 (String) intValue : (Int) 1
+                                                 (String) stringValue : (String) Str
+                                               }
+                                               """
+        )
+    }
+    
+    func testWithDictionaryWithDictionary() {
+        let dict: [String: Any] = ["intValue": 1,
+                                   "dictValue": ["stringValue": "Str"]]
+        assert(descriptionOf: dict, isEqualTo: """
+                                               Dictionary<String, Any> {
+                                                 (String) intValue : (Int) 1
+                                                 (String) dictValue : Dictionary<String, String> {
+                                                   (String) stringValue : (String) Str
+                                                 }
+                                               }
+                                               """
+        )
+    }
+    
+    func testWithDictionaryWithStruct() {
+        let dict: [String: Any] = ["structValue": StructA(intVar: 1, stringVar: "str")]
+        assert(descriptionOf: dict, isEqualTo: """
+                                               Dictionary<String, Any> {
+                                                 (String) structValue : StructA {
+                                                   intVar: (Int) 1
+                                                   stringVar: (String) str
+                                                 }
+                                               }
+                                               """
+        )
+    }
     // Test Cases
     // - Class with superclass
-    // - Array of Optional
-    // - Dictionary
-    // - Set
-    // - Multiple Optional with nil
+    // - Dictionary - key order issue
     
     private func assert(descriptionOf subject: Any, isEqualTo expectedDescription: String, file: StaticString = #filePath, line: UInt = #line) {
         let actualDescription = reflectiveDescription(of: subject)
