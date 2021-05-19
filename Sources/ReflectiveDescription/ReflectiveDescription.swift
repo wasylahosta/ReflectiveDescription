@@ -5,6 +5,7 @@ public func reflectiveDescription(of subject: Any) -> String {
 }
 
 private let optionalTypeNamePrefix = "Optional<"
+private let singleIndent = "  "
 
 private func reflectiveDescription(of subject: Any, level: Int, optionals: Int = 0, isDictionaryElement: Bool = false) -> String {
     let mirror = Mirror(reflecting: subject)
@@ -25,18 +26,17 @@ private func reflectiveDescription(of subject: Any, level: Int, optionals: Int =
             return "(\(printableTypeName)) \(value)"
         }
     } else {
-        let singleIndent = "  "
         let isDictionary = typeName.hasPrefix("Dictionary<")
         if !isDictionaryElement {
             let indent = Array(repeating: singleIndent, count: level).joined()
-            return mirror.children.reduce("\(printableTypeName) {") { result, child in
-                var line = "\n\(indent)\(singleIndent)"
-                if let label = child.label {
-                    line += "\(label): "
-                }
-                line += "\(reflectiveDescription(of: child.value, level: level + 1, isDictionaryElement: isDictionary))"
-                return result + line
-            } + "\n\(indent)}"
+            let header = "\(printableTypeName) {"
+            let footer = "\n\(indent)}"
+            var childrenDescription = ""
+            if let children = mirror.superclassMirror?.children, !children.isEmpty {
+                childrenDescription += reflectiveDescription(of: children, indent, level, isDictionary)
+            }
+            childrenDescription += reflectiveDescription(of: mirror.children, indent, level, isDictionary)
+            return header + childrenDescription + footer
         } else {
             return mirror.children.map {
                 "\(reflectiveDescription(of: $0.value, level: level, isDictionaryElement: isDictionary))"
@@ -56,4 +56,19 @@ private func rewrap(_ typeName: String) -> String {
 
 private func unwrap(_ typeName: String) -> String {
     return String(typeName.dropFirst(optionalTypeNamePrefix.count).dropLast())
+}
+
+private func reflectiveDescription(of children: Mirror.Children, _ indent: String, _ level: Int, _ isDictionary: Bool) -> String {
+    var lines = children.map { child -> String in
+        var line = "\n\(indent)\(singleIndent)"
+        if let label = child.label {
+            line += "\(label): "
+        }
+        line += "\(reflectiveDescription(of: child.value, level: level + 1, isDictionaryElement: isDictionary))"
+        return line
+    }
+    if isDictionary {
+        lines.sort()
+    }
+    return lines.joined()
 }

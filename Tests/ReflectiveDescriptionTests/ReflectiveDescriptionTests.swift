@@ -32,7 +32,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
         assert(descriptionOf: optionalInt as Any, isEqualTo: "(Int??) 4")
     }
     
-    func testWithDoubleOptionalNilInt() {
+    func testWithTripleOptionalNilInt() {
         let optionalInt: Int??? = nil
         assert(descriptionOf: optionalInt as Any, isEqualTo: "(Int???) nil")
     }
@@ -59,7 +59,6 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                   """
         )
     }
-    
     
     func testWithEmptyClass() {
         let aClass = EmptyClass()
@@ -158,10 +157,10 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                    "dictValue": ["stringValue": "Str"]]
         assert(descriptionOf: dict, isEqualTo: """
                                                Dictionary<String, Any> {
-                                                 (String) intValue : (Int) 1
                                                  (String) dictValue : Dictionary<String, String> {
                                                    (String) stringValue : (String) Str
                                                  }
+                                                 (String) intValue : (Int) 1
                                                }
                                                """
         )
@@ -179,9 +178,22 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                """
         )
     }
-    // Test Cases
-    // - Class with superclass
-    // - Dictionary - key order issue
+    
+    
+    func testWithSubClass() {
+        let aClass = ClassB(stringVar: "Str 0", intVar: 1, structVar: StructA(intVar: 2, stringVar: "Str"))
+        assert(descriptionOf: aClass, isEqualTo: """
+                                                  ClassB {
+                                                    intVar: (Int) 1
+                                                    structVar: StructA {
+                                                      intVar: (Int) 2
+                                                      stringVar: (String) Str
+                                                    }
+                                                    stringVar: (String) Str 0
+                                                  }
+                                                  """
+        )
+    }
     
     private func assert(descriptionOf subject: Any, isEqualTo expectedDescription: String, file: StaticString = #filePath, line: UInt = #line) {
         let actualDescription = reflectiveDescription(of: subject)
@@ -209,5 +221,15 @@ class ClassA {
     init(intVar: Int, structVar: StructA) {
         self.intVar = intVar
         self.structVar = structVar
+    }
+}
+
+class ClassB: ClassA {
+
+    let stringVar: String
+
+    init(stringVar: String, intVar: Int, structVar: StructA) {
+        self.stringVar = stringVar
+        super.init(intVar: intVar, structVar: structVar)
     }
 }
