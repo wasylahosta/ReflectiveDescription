@@ -39,16 +39,16 @@ print(reflectiveDescription(of: aPerson))
 ##### Console output
 ```
 Person {
-  fullName: (String) John Doe
+  fullName: (String) "John Doe"
   nickname: (String?) nil
   age: (Int) 42
   pets: Array<Pet> {
     Pet {
-      name: (String) Jack
+      name: (String) "Jack"
       species: (Species) cat
     }
     Pet {
-      name: (String) Max
+      name: (String) "Max"
       species: (Species) dog
     }
   }

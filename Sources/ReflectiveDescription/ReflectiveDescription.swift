@@ -36,7 +36,11 @@ private func unwrap(_ typeName: String) -> String {
 private func reflectiveDescription(ofNonOptionalOrUnwrapped subject: Any, _ mirror: Mirror, _ level: Int, _ optionals: Int = 0, _ parentMirror: Mirror?) -> String {
     var printableTypeName = (0..<optionals).reduce(mirror.typeName) { (name, _) in name + "?" }
     if mirror.isSimpleType {
-        return "(\(printableTypeName)) \(subject)"
+        if mirror.isString {
+            return "(\(printableTypeName)) \"\(subject)\""
+        } else {
+            return "(\(printableTypeName)) \(subject)"
+        }
     } else if mirror.isEnum {
         return reflectiveDescription(ofEnum: subject, mirror, level, printableTypeName)
     } else {
@@ -114,6 +118,10 @@ extension Mirror {
     
     var typeName: String {
         "\(subjectType)"
+    }
+    
+    var isString: Bool {
+        typeName.contains("String")
     }
     
     var isOptional: Bool {

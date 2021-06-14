@@ -5,8 +5,18 @@ final class ReflectiveDescriptionTests: XCTestCase {
     
     func testWithString() {
         let string = "String Value"
-        let expectedDescription = "(String) \(string)"
+        let expectedDescription = "(String) \"\(string)\""
         assert(descriptionOf: string, isEqualTo: expectedDescription)
+    }
+    
+    func testWithStringDoubleQuotesInside() {
+        assert(descriptionOf: "\"Str\"", isEqualTo: "(String) \"\"Str\"\"")
+    }
+    
+    func testWithSubstring() {
+        let string = "String Value"
+        let substring = string.prefix(4)
+        assert(descriptionOf: substring, isEqualTo: "(String) \"Stri\"")
     }
     
     func testWithInteger() {
@@ -71,7 +81,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
         assert(descriptionOf: aStruct, isEqualTo: """
                                                   StructA {
                                                     intVar: (Int) 1
-                                                    stringVar: (String) str
+                                                    stringVar: (String) "str"
                                                   }
                                                   """
         )
@@ -82,7 +92,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
         assert(descriptionOf: aStruct as Any, isEqualTo: """
                                                   StructA? {
                                                     intVar: (Int) 1
-                                                    stringVar: (String) str
+                                                    stringVar: (String) "str"
                                                   }
                                                   """
         )
@@ -95,7 +105,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                     intVar: (Int) 1
                                                     structVar: StructA {
                                                       intVar: (Int) 2
-                                                      stringVar: (String) Str
+                                                      stringVar: (String) "Str"
                                                     }
                                                   }
                                                   """
@@ -106,9 +116,9 @@ final class ReflectiveDescriptionTests: XCTestCase {
         let strings = ["Str 0", "Str 1", "Str 2"]
         assert(descriptionOf: strings, isEqualTo: """
                                                   Array<String> {
-                                                    (String) Str 0
-                                                    (String) Str 1
-                                                    (String) Str 2
+                                                    (String) "Str 0"
+                                                    (String) "Str 1"
+                                                    (String) "Str 2"
                                                   }
                                                   """
         )
@@ -119,7 +129,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
         assert(descriptionOf: array as Any, isEqualTo: """
                                                        Array<Any>? {
                                                          (Int) 1
-                                                         (String) Str
+                                                         (String) "Str"
                                                          (Double) 1.2
                                                        }
                                                        """
@@ -142,8 +152,8 @@ final class ReflectiveDescriptionTests: XCTestCase {
         let dict: [String: Any] = ["intValue": 1, "stringValue": "Str"]
         assert(descriptionOf: dict, isEqualTo: """
                                                Dictionary<String, Any> {
-                                                 (String) intValue : (Int) 1
-                                                 (String) stringValue : (String) Str
+                                                 (String) "intValue" : (Int) 1
+                                                 (String) "stringValue" : (String) "Str"
                                                }
                                                """
         )
@@ -154,10 +164,10 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                    "dictValue": ["stringValue": "Str"]]
         assert(descriptionOf: dict, isEqualTo: """
                                                Dictionary<String, Any> {
-                                                 (String) dictValue : Dictionary<String, String> {
-                                                   (String) stringValue : (String) Str
+                                                 (String) "dictValue" : Dictionary<String, String> {
+                                                   (String) "stringValue" : (String) "Str"
                                                  }
-                                                 (String) intValue : (Int) 1
+                                                 (String) "intValue" : (Int) 1
                                                }
                                                """
         )
@@ -167,9 +177,9 @@ final class ReflectiveDescriptionTests: XCTestCase {
         let dict: [String: Any] = ["structValue": StructA(intVar: 1, stringVar: "str")]
         assert(descriptionOf: dict, isEqualTo: """
                                                Dictionary<String, Any> {
-                                                 (String) structValue : StructA {
+                                                 (String) "structValue" : StructA {
                                                    intVar: (Int) 1
-                                                   stringVar: (String) str
+                                                   stringVar: (String) "str"
                                                  }
                                                }
                                                """
@@ -184,9 +194,9 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                     intVar: (Int) 1
                                                     structVar: StructA {
                                                       intVar: (Int) 2
-                                                      stringVar: (String) Str
+                                                      stringVar: (String) "Str"
                                                     }
-                                                    stringVar: (String) Str 0
+                                                    stringVar: (String) "Str 0"
                                                   }
                                                   """
         )
@@ -196,10 +206,10 @@ final class ReflectiveDescriptionTests: XCTestCase {
         let tuple = (stringValue: "String Value", structValue: StructA(intVar: 1, stringVar: "Str"))
         assert(descriptionOf: tuple, isEqualTo: """
                                                 Tuple {
-                                                  stringValue: (String) String Value
+                                                  stringValue: (String) "String Value"
                                                   structValue: StructA {
                                                     intVar: (Int) 1
-                                                    stringVar: (String) Str
+                                                    stringVar: (String) "Str"
                                                   }
                                                 }
                                                 """)
@@ -209,10 +219,10 @@ final class ReflectiveDescriptionTests: XCTestCase {
         let tuple = ("String Value", StructA(intVar: 1, stringVar: "Str"))
         assert(descriptionOf: tuple, isEqualTo: """
                                                 Tuple {
-                                                  .0: (String) String Value
+                                                  .0: (String) "String Value"
                                                   .1: StructA {
                                                     intVar: (Int) 1
-                                                    stringVar: (String) Str
+                                                    stringVar: (String) "Str"
                                                   }
                                                 }
                                                 """)
@@ -230,7 +240,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                 (EnumA) associated {
                                                   structValue: StructA {
                                                     intVar: (Int) 1
-                                                    stringVar: (String) Str
+                                                    stringVar: (String) "Str"
                                                   }
                                                   .1: (Int) 2
                                                 }
@@ -245,7 +255,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
                                                   (EnumA) associated {
                                                     structValue: StructA {
                                                       intVar: (Int) 1
-                                                      stringVar: (String) Str
+                                                      stringVar: (String) "Str"
                                                     }
                                                     .1: (Int) 2
                                                   }
