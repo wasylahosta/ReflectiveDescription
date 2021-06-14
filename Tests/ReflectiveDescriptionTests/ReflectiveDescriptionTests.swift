@@ -40,8 +40,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
     func testWithEmptyStruct() {
         let aStruct = EmptyStruct()
         assert(descriptionOf: aStruct, isEqualTo: """
-                                                  EmptyStruct {
-                                                  }
+                                                  EmptyStruct {}
                                                   """
         )
     }
@@ -54,8 +53,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
     func testWithOptionalEmptyStructWithSomeValue() {
         let aStruct: EmptyStruct? = EmptyStruct()
         assert(descriptionOf: aStruct as Any, isEqualTo: """
-                                                  EmptyStruct? {
-                                                  }
+                                                  EmptyStruct? {}
                                                   """
         )
     }
@@ -63,8 +61,7 @@ final class ReflectiveDescriptionTests: XCTestCase {
     func testWithEmptyClass() {
         let aClass = EmptyClass()
         assert(descriptionOf: aClass, isEqualTo: """
-                                                  EmptyClass {
-                                                  }
+                                                  EmptyClass {}
                                                   """
         )
     }
@@ -195,6 +192,67 @@ final class ReflectiveDescriptionTests: XCTestCase {
         )
     }
     
+    func testWithTuple() {
+        let tuple = (stringValue: "String Value", structValue: StructA(intVar: 1, stringVar: "Str"))
+        assert(descriptionOf: tuple, isEqualTo: """
+                                                Tuple {
+                                                  stringValue: (String) String Value
+                                                  structValue: StructA {
+                                                    intVar: (Int) 1
+                                                    stringVar: (String) Str
+                                                  }
+                                                }
+                                                """)
+    }
+    
+    func testWithAnonymousTuple() {
+        let tuple = ("String Value", StructA(intVar: 1, stringVar: "Str"))
+        assert(descriptionOf: tuple, isEqualTo: """
+                                                Tuple {
+                                                  .0: (String) String Value
+                                                  .1: StructA {
+                                                    intVar: (Int) 1
+                                                    stringVar: (String) Str
+                                                  }
+                                                }
+                                                """)
+    }
+    
+    func testWithEnumSimpleCase() {
+        let value = EnumA.simple
+        assert(descriptionOf: value, isEqualTo: "(EnumA) simple")
+    }
+    
+    func testWithEnumWithAssociatedValue() {
+        let structA = StructA(intVar: 1, stringVar: "Str")
+        let value = EnumA.associated(structValue: structA, 2)
+        assert(descriptionOf: value, isEqualTo: """
+                                                (EnumA) associated {
+                                                  structValue: StructA {
+                                                    intVar: (Int) 1
+                                                    stringVar: (String) Str
+                                                  }
+                                                  .1: (Int) 2
+                                                }
+                                                """)
+    }
+    
+    func testWithEnumWithAssociatedValueInsideArray() {
+        let structA = StructA(intVar: 1, stringVar: "Str")
+        let value = [EnumA.associated(structValue: structA, 2)]
+        assert(descriptionOf: value, isEqualTo: """
+                                                Array<EnumA> {
+                                                  (EnumA) associated {
+                                                    structValue: StructA {
+                                                      intVar: (Int) 1
+                                                      stringVar: (String) Str
+                                                    }
+                                                    .1: (Int) 2
+                                                  }
+                                                }
+                                                """)
+    }
+    
     private func assert(descriptionOf subject: Any, isEqualTo expectedDescription: String, file: StaticString = #filePath, line: UInt = #line) {
         let actualDescription = reflectiveDescription(of: subject)
         XCTAssertEqual(expectedDescription, actualDescription, file: file, line: line)
@@ -232,4 +290,10 @@ class ClassB: ClassA {
         self.stringVar = stringVar
         super.init(intVar: intVar, structVar: structVar)
     }
+}
+
+enum EnumA {
+    
+    case simple
+    case associated(structValue: StructA, Int)
 }

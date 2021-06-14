@@ -16,7 +16,7 @@ private func reflectiveDescription(of subject: Any, level: Int, optionals: Int =
             return "(\(rewrap(mirror.typeName))) nil"
         }
     } else {
-        return reflectiveDescription(ofNonOptional: subject, mirror, level, optionals, parentMirror)
+        return reflectiveDescription(ofNonOptionalOrUnwrapped: subject, mirror, level, optionals, parentMirror)
     }
 }
 
@@ -33,31 +33,66 @@ private func unwrap(_ typeName: String) -> String {
     return String(typeName.dropFirst(optionalTypeNamePrefix.count).dropLast())
 }
 
-private func reflectiveDescription(ofNonOptional subject: Any, _ mirror: Mirror, _ level: Int, _ optionals: Int = 0, _ parentMirror: Mirror?) -> String {
-    let printableTypeName = (0..<optionals).reduce(mirror.typeName) { (name, _) in name + "?" }
+private func reflectiveDescription(ofNonOptionalOrUnwrapped subject: Any, _ mirror: Mirror, _ level: Int, _ optionals: Int = 0, _ parentMirror: Mirror?) -> String {
+    var printableTypeName = (0..<optionals).reduce(mirror.typeName) { (name, _) in name + "?" }
     if mirror.isSimpleType {
         return "(\(printableTypeName)) \(subject)"
+    } else if mirror.isEnum {
+        return reflectiveDescription(ofEnum: subject, mirror, level, printableTypeName)
     } else {
+        if mirror.isTuple {
+            printableTypeName = "Tuple"
+        }
         if mirror.children.isEmpty {
-            return printableTypeName + " {\n}"
+            return printableTypeName + " {}"
         } else {
             if let parentMirror = parentMirror, parentMirror.isDictionary {
-                return mirror.children.map {
-                    "\(reflectiveDescription(of: $0.value, level: level, mirror))"
-                }.joined(separator: " : ")
+                return reflectiveDescription(ofDictionaryMembers: mirror, level)
+            } else if let parentMirror = parentMirror, parentMirror.isEnum {
+                return reflectiveDescription(ofEnumAssociatedValues: mirror, level)
             } else {
-                let indent = Array(repeating: singleIndent, count: level).joined()
+                let indent = indent(for: level)
                 let header = "\(printableTypeName) {"
-                let footer = "\n\(indent)}"
                 var childrenDescription = ""
                 if let children = mirror.superclassMirror?.children, !children.isEmpty {
                     childrenDescription += reflectiveDescription(of: children, indent, level, mirror)
                 }
                 childrenDescription += reflectiveDescription(of: mirror.children, indent, level, mirror)
-                return header + childrenDescription + footer
+                return header + childrenDescription + footer(for: level)
             }
         }
     }
+}
+
+private func reflectiveDescription(ofEnum subject: Any, _ mirror: Mirror, _ level: Int, _ printableTypeName: String) -> String {
+    if let child = mirror.children.first {
+        return "(\(printableTypeName)) \(child.label!) {\n" +
+            reflectiveDescription(of: child.value, level: level + 1, mirror) +
+            footer(for: level)
+    } else {
+        return "(\(printableTypeName)) \(subject)"
+    }
+}
+
+private func reflectiveDescription(ofEnumAssociatedValues mirror: Mirror, _ level: Int) -> String {
+    let indent = indent(for: level)
+    return mirror.children.map {
+        "\(indent)\($0.label!): \(reflectiveDescription(of: $0.value, level: level, mirror))"
+    }.joined(separator: "\n")
+}
+
+private func reflectiveDescription(ofDictionaryMembers mirror: Mirror, _ level: Int) -> String {
+    return mirror.children.map {
+        "\(reflectiveDescription(of: $0.value, level: level, mirror))"
+    }.joined(separator: " : ")
+}
+
+private func indent(for level: Int) -> String {
+    Array(repeating: singleIndent, count: level).joined()
+}
+
+private func footer(for level: Int) -> String {
+    "\n\(indent(for: level))}"
 }
 
 private func reflectiveDescription(of children: Mirror.Children, _ indent: String, _ level: Int, _ parentMirror: Mirror?) -> String {
@@ -91,5 +126,13 @@ extension Mirror {
     
     var isDictionary: Bool {
         displayStyle == .dictionary
+    }
+    
+    var isEnum: Bool {
+        displayStyle == .enum
+    }
+    
+    var isTuple: Bool {
+        displayStyle == .tuple
     }
 }
