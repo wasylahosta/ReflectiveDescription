@@ -81,7 +81,7 @@ private func reflectiveDescription(ofEnum subject: Any, _ mirror: Mirror, _ leve
 private func reflectiveDescription(ofEnumAssociatedValues mirror: Mirror, _ level: Int) -> String {
     let indent = indent(for: level)
     return mirror.children.map {
-        "\(indent)\($0.label!): \(reflectiveDescription(of: $0.value, level: level, mirror))"
+        "\(indent)\($0.label ?? "-"): \(reflectiveDescription(of: $0.value, level: level, mirror))"
     }.joined(separator: "\n")
 }
 
